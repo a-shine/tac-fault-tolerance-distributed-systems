@@ -1,0 +1,1 @@
+{"rule":"OXFORD_SPELLING_Z_NOT_S","sentence":"^\\Q- Some key definitions and terminology \t\t\t\t\t\t- Introducing consensus \t\t\t\t\t\t\t- Two generals problem \t\t\t\t\t\t- Contextualising i.e., why this matters to me?\\E$"}

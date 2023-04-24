@@ -1,0 +1,319 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+	<title>Teach a class</title>
+
+	<link rel="stylesheet" href="dist/reset.css">
+	<link rel="stylesheet" href="dist/reveal.css">
+	<link rel="stylesheet" href="dist/theme/google.css">
+
+	<!-- Theme used for syntax highlighted code -->
+	<link rel="stylesheet" href="plugin/highlight/monokai.css">
+</head>
+
+<body>
+	<div class="reveal">
+		<div class="slides">
+			<!-- Requirements for presentation: https://docs.google.com/document/d/1TPkwKjMaeSXaI5qkAice8fkR-mwIVCR5AevzE40YFj0/edit?resourcekey=0-XXiF4WRQjZqtz57-LvWQ6Q# -->
+			<section data-markdown>
+				<script type="text/template">
+						# Distributed systems
+						## A crash course
+						Notes:
+						- **Remember to record!**
+						- A crash course in distributed systems
+						- Goal is to give you a taste of the subject and introduce you to some foundational concepts
+						- We will build up to one of the principle problems in distributed systems
+						---
+						## Agenda
+						- Motivation for the presentation
+						- What are distributed systems, and why does the field exist?
+						- Some key definitions and terminology
+						- Introducing consensus
+							- Two generals problem
+						- Contextualising i.e., why this matters to me?
+						- Some good resources
+						Notes:
+						- On the agenda...
+						---
+						## Motivation
+						Notes:
+						- Area that I studied quite extensively in my final year at university (both for my dissertation and in terms of my modules)
+						- One of my best professors Matt Leeke taught a fantastic module on the subject and much of the presentation is based around the structure of his module
+						- I hope to give you some theoretical background for how stuff like GCP works
+						---
+						## Two important questions
+						- What are distributed systems?
+						- Why does the field exist?
+						Notes:
+						- Let's start with two important questions...
+					</script>
+			</section>
+			<section data-auto-animate>
+				<h3>First, what are distributed systems?</h3>
+			</section>
+			<section data-auto-animate>
+				<h3>First, what are distributed systems?</h3>
+				<p style="font-style: italic;">"A distributed system is a collection of independent computers that
+					appears to its users as a single coherent system." - Andrew S. Tanenbaum</p>
+				<aside class="notes">
+					<ul>
+						<li>Characterisation given by Tanembaum in his textbook - and I think it's one of the better
+							definitions out there</li>
+						<li>This is a characterisation rather than a strict definition, because it is tricky to formally
+							define - so he allows for a looser description</li>
+						<li>Let us focus for a second on it...</li>
+					</ul>
+				</aside>
+			</section>
+			<section data-auto-animate>
+				<p style="font-style: italic;">"A distributed system is a collection of independent <span
+						class="fragment strike">computers</span> <span class="fragment"><b>entities</b></span> that
+					appears to its users as a single coherent system." <span class="fragment fade-out">- Andrew S.
+						Tanenbaum</span></p>
+				<aside class="notes">
+					<ul>
+						<li>I think we can further generalise, by removing the word computer, and replacing it with entities</li>
+						<li>Thinking of the field as such, allows us to consider distributed system in a broader and different context</li>
+						<li>It lets us consider not only computer systems but also biological systems like ant colonies or energy systems like the power grid</li>
+						<li>We've done all this work studying computer systems but actually this research is relevant to so many aspects of our lives, like the way we interact in social environments</li>
+						<li>So, it can be interesting to draw parallels between our lived experience and the computer systems that work to enable our modern lives</li>
+						<li>This brings us on nicely to...</li>
+					</ul>
+				</aside>
+			</section>
+			<section>
+				<h3>So, why does the field exist?</h3>
+				<aside class="notes">
+					<ul>
+						<li>When systems get increasingly complex it is natural for them not to be able to scale vertically</li>
+						<li>Take an ant, on its own it is a complex organism with an intricate nerve system, brain, lungs... but its abilities are capped by its physical stature - it will only be able to achieve so much</li>
+						<li>Now consider a colony of ants working together, they manage themselves, coordinate, can build enormous intricate nests, moving large amounts of material and there colonies persist beyond the existence of any individual ant</li>
+						<li>We see a similar transformation in computer systems - one computer is amazing but limited, but when they work together we can create wonderful systems like the internet</li>
+					</ul>
+				</aside>
+			</section>
+			<section>
+				<h2>Some definitions and terminology...</h2>
+			</section>
+			<section>
+				<h3>What are the components of a system?</h3>
+				<img src="imgs/Screen Shot 2022-08-15 at 11.27.05.png" width="400px">
+				<ul>
+					<li>A system is a set or processes (nodes) that are interconnected and hence can communicate with
+						one another</li>
+					<li>Typically, we consider each process to be a server (i.e., servers information) and/or a client
+						(asking for information)</li>
+				</ul>
+				<aside class="notes">
+					<ul>
+						<li>There is a bit of a misnomer with servers - people often think of servers as the physical hardware which can get a little confusing</li>
+						<li>We have started to call computers in data warehouses servers because they're computers whose role is to run server processes which are programs that 'serve' the network in some way</li>
+						<li>But I think it is better to think of servers not as physical machines but rather software processes</li>
+					</ul>
+				</aside>
+			</section>
+			<section>
+				<h3>What are the metrics for a 'good' distributed system?</h3>
+				<ul>
+					<li>Aim for:</li>
+					<ul>
+						<li>Reliability - fulfils specification during the period of operation</li>
+						<li>Availability - fulfils specification over an indefinite period</li>
+					</ul>
+					<li>While minimizing</li>
+					<ul>
+						<li>Message complexity - the amount of messages (i.e. network activity) needed to solve a
+							problem</li>
+						<li>Time complexity - amount of processing needed to solve a problem</li>
+					</ul>
+				</ul>
+			</section>
+			<section>
+				<h3>Chain of failure</h3>
+				<p>Fault --> Error --> Failure</p>
+				<aside class="notes">
+					<ul>
+						<li>We obtain reliability and availability by understanding the chain of failure</li>
+						<li>Failures are high level, they occur when a system fails to meet its specification i.e. the thing it was designed to do</li>
+						<li>Failures occur due to erroneous system states i.e. errors</li>
+						<li>And errors happen because some fault has occurred i.e. an event happened that we didn't plan for</li>
+					</ul>
+				</aside>
+			</section>
+			<section>
+				<h3>Now, how do we model a distributed system?</h3>
+				<aside class="notes">
+					So, now that we can think formally about how a distributed system behaves under different models different scenarios?
+				</aside>
+			</section>
+			<section>
+				<h4>System model</h4>
+				<table>
+					<thead>
+						<tr>
+							<th>Model</th>
+							<th>Definition</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Synchronous</td>
+							<td>There exists a known upper bound on communication (operates in lockstep)</td>
+						</tr>
+						<tr>
+							<td>Partially synchronous</td>
+							<td>There is an unknown upper bound on the delay of a message (this is mostly how the
+								internet operates)</td>
+						</tr>
+						<tr>
+							<td>Asynchronous</td>
+							<td>There is no upper bound on the delay of a message</td>
+						</tr>
+					</tbody>
+				</table>
+				<aside class="notes">
+					Analogy - structured debate, guided debate and your typical debate in the houses of parliament...
+				</aside>
+			</section>
+			<section>
+				<h4>Failure model</h4>
+				<table>
+					<thead>
+						<tr>
+							<th>Model</th>
+							<th>Definition</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Link</td>
+							<td>Failure happens during the transmission of a message</td>
+						</tr>
+						<tr>
+							<td>Stop</td>
+							<td>Process fails (also known as crash failure)</td>
+						</tr>
+						<tr>
+							<td>Byzantine</td>
+							<td>A process fails in an <b>arbitrary</b> way</td>
+						</tr>
+					</tbody>
+				</table>
+			</section>
+			<section>
+				<h2>Our first problem in distributed systems - consensus</h2>
+				<p>Distributed processors are required to reach a common decision, even if they initially disagree on what that decision ought to be</p>
+				<aside class="notes">
+					There are several thought experiments to explore different variations of the consensus problem - we will look at the Two general problem - which describes consensus under the link failure model in a synchronous network
+				</aside>
+			</section>
+			<section>
+				<img src="imgs/attack_maybe-868x488.webp" alt="">
+				<aside class="notes">
+					<ul>
+						<li>The story goes like this...</li>
+						<li>Two armies are preparing for war on either side of a valley, in the middle of which lies a fortified city.</li>
+						<li>Each army, led by a different general, has the same goal; to destroy the city.</li>
+						<li>However, the city has powerful defences, and the only way for it to be taken down is if it is stormed by the two armies at the same time.</li>
+						<li>Both generals know this, and so they have to coordinate their time of attack so that they have a chance at taking down the city.</li>
+						<li>Unfortunately, the only way for the armies to communicate with each other is by sending messengers through the valley, dangerously close to the city.</li>
+						<li>Should the messenger be spotted as he passes, he will be murdered instantly by the city's defenders.</li>
+						<li>Can you guys, see how this scenario is potentially parallel to two computer nodes sending each other a message on an unstable network?</li>
+						<li>One potential solution is for General A to send a message to General B stating a time of attack, so that both armies can attack at the same time and win.</li>
+						<li>However, if the messenger is killed, only General A will attack, and they will lose the battle along with thousands of soldiers.</li>
+						<li>What if General A asked General B to send back a message stating that he had received the message and agreed to the time? Surely this would work, as General A would only attack if he received the acknowledgement.</li>
+						<li>Alas, this only flips our problem, as if the returning messenger is killed, General A won't attack but General B will, losing the battle and thousands of soldiers.</li>
+						<li>The reality is no matter how many acknowledgements are sent, the general which sent the last acknowledgement can never be sure whether it has reached the other.</li>
+						<li>Theoretically, an infinite number of messages are required to achieve consensus on when to attack.</li>
+					</ul>
+				</aside>
+			</section>
+			<section>
+				<img src="imgs/Screen Shot 2022-08-15 at 12.26.37.png" alt="">
+			</section>
+			<section>
+				<h2>Contextualising</h2>
+				<img src="imgs/Screen Shot 2022-08-15 at 12.16.54.png" alt="">
+				<aside class="notes">
+					<ul>
+						<li>Why is this relevant to us?</li>
+						<li>Deliveroo was headline news in 2018 because of some pretty bad engineering decision in regard to their infrastructure</li>
+						<li>There payment server was not able to send back acknowledgements to clients and hence clients kept trying to repay for orders thinking that they had failed</li>
+						<li>They didn't design any fail-safes in order to prevent users from making multiple orders in quick succession and because of the Two generals impossibility they could never be 100% sure that the client and backend system where on the same page - they couldn't reach consensus</li>	
+						<li>There is a lesson to be learned here, these are problems that we will encounter working in Cloud. VMs will fail, information will get out of sync but considering distributed systems formally gives us a good framework for helping them and designing better more robust systems</li>
+					</ul>
+				</aside>
+				
+			</section>
+			<section>
+				<h2>Distributed systems superstars and good resources</h2>
+				<!-- <img src="imgs/tanenbaum.jpeg" width="250px"> -->
+				<img src="imgs/1__NspvUYlfSWvxc65U45VVg.jpeg" width="300px">
+				<img src="imgs/Lamport2.jpeg" width="338px">
+				<aside class="notes">
+					<ul>
+						<li>I will leave you with some good further resources, if you want to read the seminal works then you need to look for Nancy Lynch and Leslie Lamport these guys laid the foundations for the field</li>
+						<li>My personal favourite textbook is Tenenbaum's Distributed systems: principles and paradigms</li>
+						<li>And I'm happy to take any of questions or clarify things further for you</li>
+					</ul>
+				</aside>
+			</section>
+		</div>
+	</div>
+
+	<script src="dist/reveal.js"></script>
+	<script src="plugin/notes/notes.js"></script>
+	<script src="plugin/markdown/markdown.js"></script>
+	<script src="plugin/highlight/highlight.js"></script>
+	<script>
+		// More info about initialization & config:
+		// - https://revealjs.com/initialization/
+		// - https://revealjs.com/config/
+		Reveal.initialize({
+			hash: true,
+
+			// Learn about plugins: https://revealjs.com/plugins/
+			plugins: [RevealMarkdown, RevealHighlight, RevealNotes]
+		});
+	</script>
+</body>
+
+</html>
+
+
+<!-- # Distributed systems
+
+
+---
+## What are distributed systems and why does the field exist
+- tennanbaums quote - 
+Distributed systems are so prevalent, it can be difficult to come up with a definition that captures them all. Tanembaum, hence, provides a loose characterisation of a distributed system as a
+Let's unpack this definition, we could generalise it as such... 
+- 
+Why does the fied exist?
+as we want a system to do increassinlgy complex things we eventually need it to expand beyond its pgysical stature - we distribute it - but it turns out when you do this you encounter a series of problems - we will focus on one of the most important and famous: concensus - this is particularly important when designing distributed databases such as Spanner
+---
+## Some definitions and terminology
+---
+### Systems model
+### Failure model
+Understanding the metrics for good distributed systems - reliability vs. availoability - message complexity vs. time complexity
+---
+## Introducing the core problems
+Scaling horizontally can lead to some problems
+---
+### Leader election
+---
+### Concensus
+---
+#### FLP impossibility
+---
+## Contextualising
+How does this relate to GCP and the cloud more broadly speaking? -->
+
+<!-- if you wanna know more there are two fairly complete seminal works on distributed systems - my personal recommendation is Tennanbaums textbook but the classic is Nancy lynch's -->
